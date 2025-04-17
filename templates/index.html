@@ -1,27 +1,284 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Self-Destructing URL Shortener</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
-        input, button { padding: 10px; margin: 5px 0; width: 100%; }
-        #result { margin-top: 20px; padding: 10px; background: #f0f0f0; }
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f9fafb;
+            --card-bg: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --success: #10b981;
+            --error: #ef4444;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+        
+        body { 
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px var(--shadow), 0 1px 3px var(--shadow);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px var(--shadow), 0 4px 6px -2px var(--shadow);
+        }
+        
+        h1 {
+            font-weight: 700;
+            margin-top: 0;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary);
+        }
+        
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            background-color: white;
+        }
+        
+        input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+        
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.25rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.15s;
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+        
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        #result {
+            margin-top: 2rem;
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .result-card {
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+        
+        .url-display {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .url-value {
+            font-family: monospace;
+            word-break: break-all;
+            flex: 1;
+        }
+        
+        .copy-btn {
+            background: #f3f4f6;
+            border: none;
+            width: auto;
+            padding: 0.5rem;
+            border-radius: 6px;
+        }
+        
+        .copy-btn:hover {
+            background: #e5e7eb;
+        }
+        
+        .expiry {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .qr-container {
+            display: flex;
+            justify-content: center;
+            margin: 1.5rem 0;
+        }
+        
+        .info {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+        
+        .error-message {
+            color: var(--error);
+            background-color: rgba(239, 68, 68, 0.1);
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin-top: 1rem;
+        }
+        
+        .success-message {
+            color: var(--success);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .tab {
+            background: none;
+            border: none;
+            padding: 0.5rem 0;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            width: auto;
+        }
+        
+        .tab.active {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
     </style>
 </head>
 <body>
-    <h1>🔗 Self-Destructing URLs</h1>
-    <input type="url" id="urlInput" placeholder="Enter URL to shorten">
-    <input type="number" id="expiryInput" placeholder="Hours until expiry (default: 24)" min="1">
-    <button onclick="shortenUrl()">Shorten URL</button>
-    <div id="result"></div>
+    <div class="container">
+        <div class="card">
+            <h1>🔗 Self-Destructing URLs</h1>
+            
+            <div class="input-group">
+                <label for="urlInput">URL to Shorten</label>
+                <input type="url" id="urlInput" placeholder="https://example.com/your-long-url" required>
+            </div>
+            
+            <div class="input-group">
+                <label for="expiryInput">Expiry Time (hours)</label>
+                <input type="number" id="expiryInput" placeholder="Default: 24 hours" min="1" value="24">
+            </div>
+            
+            <button id="shortenButton" onclick="shortenUrl()">
+                <span id="buttonText">Create Short URL</span>
+                <span id="loadingSpinner" class="spinner" style="display: none;"></span>
+            </button>
+        </div>
+        
+        <div id="result"></div>
+    </div>
 
+    <footer>
+        Self-Destructing URL Shortener • Temporary links that expire automatically
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script>
+        const shortenButton = document.getElementById('shortenButton');
+        const buttonText = document.getElementById('buttonText');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        
         async function shortenUrl() {
-            const url = document.getElementById('urlInput').value;
+            const urlInput = document.getElementById('urlInput');
+            const url = urlInput.value;
+            
             if (!url) {
-                alert('Please enter a valid URL');
+                showError('Please enter a valid URL');
                 return;
             }
+
+            // Show loading state
+            setLoading(true);
             
             const hours = parseInt(document.getElementById('expiryInput').value) || 24;
             
@@ -33,20 +290,174 @@
                 });
                 
                 if (!response.ok) {
-                    throw new Error('Network response failed');
+                    throw new Error(response.statusText || 'Network response failed');
                 }
                 
                 const data = await response.json();
-                document.getElementById('result').innerHTML = `
-                    <p>Short URL: <a href="${data.short_url}" target="_blank">${data.short_url}</a></p>
-                    <p>Expires at: ${new Date(data.expires_at).toLocaleString()}</p>
-                `;
+                displayResult(data);
+                
             } catch (error) {
-                document.getElementById('result').innerHTML = `
-                    <p style="color: red;">Error: ${error.message}</p>
-                `;
+                showError(error.message);
+            } finally {
+                setLoading(false);
             }
         }
+        
+        function setLoading(isLoading) {
+            shortenButton.disabled = isLoading;
+            buttonText.textContent = isLoading ? 'Creating...' : 'Create Short URL';
+            loadingSpinner.style.display = isLoading ? 'inline-block' : 'none';
+        }
+        
+        function displayResult(data) {
+            const resultElement = document.getElementById('result');
+            
+            const expiryDate = new Date(data.expires_at);
+            const formattedExpiry = expiryDate.toLocaleString();
+            const timeUntilExpiry = getTimeUntilExpiry(expiryDate);
+            
+            resultElement.innerHTML = `
+                <div class="card result-card">
+                    <div class="success-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        URL shortened successfully!
+                    </div>
+                    
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchTab('linkTab')">Link</button>
+                        <button class="tab" onclick="switchTab('qrTab')">QR Code</button>
+                    </div>
+                    
+                    <div id="linkTab">
+                        <div class="url-display">
+                            <span class="url-value">${data.short_url}</span>
+                            <button class="copy-btn" onclick="copyToClipboard('${data.short_url}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1-2 2v1"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <p class="expiry">Expires: ${formattedExpiry} (${timeUntilExpiry})</p>
+                        
+                        <button onclick="window.open('${data.short_url}', '_blank')">
+                            Open Link
+                        </button>
+                    </div>
+                    
+                    <div id="qrTab" style="display: none;">
+                        <div class="qr-container" id="qrcode"></div>
+                        <p class="info">Scan this QR code with your phone's camera to access the link</p>
+                        <button onclick="downloadQR()">Download QR Code</button>
+                    </div>
+                </div>
+            `;
+            
+            // Generate QR code
+            QRCode.toCanvas(document.getElementById('qrcode'), data.short_url, {
+                width: 200,
+                margin: 1,
+                color: {
+                    dark: '#4f46e5',
+                    light: '#ffffff'
+                }
+            });
+        }
+        
+        function showError(message) {
+            document.getElementById('result').innerHTML = `
+                <div class="card">
+                    <div class="error-message">
+                        Error: ${message}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function switchTab(tabId) {
+            // Hide all tabs
+            document.getElementById('linkTab').style.display = 'none';
+            document.getElementById('qrTab').style.display = 'none';
+            
+            // Show selected tab
+            document.getElementById(tabId).style.display = 'block';
+            
+            // Update active tab styling
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Copied to clipboard!');
+            }).catch(err => {
+                showToast('Failed to copy: ' + err);
+            });
+        }
+        
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.style.position = 'fixed';
+            toast.style.bottom = '20px';
+            toast.style.left = '50%';
+            toast.style.transform = 'translateX(-50%)';
+            toast.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+            toast.style.color = 'white';
+            toast.style.padding = '8px 16px';
+            toast.style.borderRadius = '4px';
+            toast.style.zIndex = '1000';
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 2000);
+        }
+        
+        function getTimeUntilExpiry(expiryDate) {
+            const now = new Date();
+            const diff = expiryDate - now;
+            
+            if (diff <= 0) return 'Expired';
+            
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            
+            if (hours > 24) {
+                const days = Math.floor(hours / 24);
+                return `expires in ${days} day${days !== 1 ? 's' : ''}`;
+            }
+            
+            return `expires in ${hours} hour${hours !== 1 ? 's' : ''} ${minutes} minute${minutes !== 1 ? 's' : ''}`;
+        }
+        
+        function downloadQR() {
+            const canvas = document.querySelector('#qrcode canvas');
+            const image = canvas.toDataURL("image/png");
+            const link = document.createElement('a');
+            link.href = image;
+            link.download = 'qrcode.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // Add enter key support
+        document.getElementById('urlInput').addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                shortenUrl();
+            }
+        });
+        
+        // Initial focus
+        document.getElementById('urlInput').focus();
     </script>
 </body>
 </html>
