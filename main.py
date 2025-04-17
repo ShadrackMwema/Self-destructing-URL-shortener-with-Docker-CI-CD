@@ -1,32 +1,31 @@
 from fastapi import FastAPI, Request
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from datetime import datetime, timedelta
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
 
-# Simple "database"
+# Temporary storage (replace with database later)
 url_db = {}
 
 @app.get("/")
-async def root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+async def read_root():
+    return {"status": "OK"}  # Simple health check
 
 @app.post("/shorten")
 async def shorten_url(url: str, expires_in: int = 24):
     key = f"short_{len(url_db)}"
     expires_at = datetime.now() + timedelta(hours=expires_in)
-    url_db[key] = {"url": url, "expires_at": expires_at.isoformat()}
+    url_db[key] = {"url": url, "expires_at": expires_at}
     return {
-        "short_url": f"https://your-domain.vercel.app/{key}",
+        "short_url": f"/{key}",  # Relative URL works better on Vercel
         "expires_at": expires_at.isoformat()
     }
 
 @app.get("/{key}")
 async def redirect(key: str):
-    if key not in url_db:
-        return {"error": "Not found"}
+    if key not in url_db or datetime.now() > url_db[key]["expires_at"]:
+        return {"error": "URL expired or invalid"}
     return RedirectResponse(url_db[key]["url"])
+
+# Required for Vercel
+handler = app
