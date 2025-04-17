@@ -1,0 +1,16 @@
+name: 🚀 Deploy URL Shortener
+on: [push]
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 🐳 Build Docker image
+        run: docker build -t url-shortener .
+      - name: 🚀 Run container
+        run: docker run -p 8000:8000 -d url-shortener
+      - name: ✅ Test endpoint
+        run: |
+          sleep 5  # Wait for server to start
+          curl -X POST "http://localhost:8000/shorten?url=https://github.com"
