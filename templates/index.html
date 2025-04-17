@@ -262,7 +262,34 @@
         Self-Destructing URL Shortener • Temporary links that expire automatically
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script>
+        // Flag to track if the QR library is loaded
+        window.qrCodeLoaded = false;
+        
+        function loadQRLibrary(callback) {
+            if (window.QRCode) {
+                window.qrCodeLoaded = true;
+                if (callback) callback();
+                return;
+            }
+            
+            const script = document.createElement('script');
+            script.src = "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js";
+            script.onload = function() {
+                window.qrCodeLoaded = true;
+                if (callback) callback();
+            };
+            script.onerror = function() {
+                console.error("Failed to load QR Code library");
+                if (callback) callback(new Error("Failed to load QR Code library"));
+            };
+            document.body.appendChild(script);
+        }
+        
+        // Pre-load the QR library
+        loadQRLibrary();
+    </script>
+
     <script>
         const shortenButton = document.getElementById('shortenButton');
         const buttonText = document.getElementById('buttonText');
@@ -327,8 +354,8 @@
                     </div>
                     
                     <div class="tabs">
-                        <button class="tab active" onclick="switchTab('linkTab')">Link</button>
-                        <button class="tab" onclick="switchTab('qrTab')">QR Code</button>
+                        <button class="tab active" onclick="switchTab('linkTab', this)">Link</button>
+                        <button class="tab" onclick="switchTab('qrTab', this)">QR Code</button>
                     </div>
                     
                     <div id="linkTab">
@@ -350,22 +377,58 @@
                     </div>
                     
                     <div id="qrTab" style="display: none;">
-                        <div class="qr-container" id="qrcode"></div>
+                        <div class="qr-container" id="qrcode">
+                            <div id="qr-loading">Loading QR code...</div>
+                        </div>
                         <p class="info">Scan this QR code with your phone's camera to access the link</p>
-                        <button onclick="downloadQR()">Download QR Code</button>
+                        <button id="downloadQrBtn" style="display: none;" onclick="downloadQR()">Download QR Code</button>
                     </div>
                 </div>
             `;
             
-            // Generate QR code
-            QRCode.toCanvas(document.getElementById('qrcode'), data.short_url, {
-                width: 200,
-                margin: 1,
-                color: {
-                    dark: '#4f46e5',
-                    light: '#ffffff'
-                }
-            });
+            // Generate QR code when switching to the tab
+            if (window.qrCodeLoaded) {
+                generateQRCode(data.short_url);
+            } else {
+                // Load QR code library if not already loaded
+                loadQRLibrary(() => generateQRCode(data.short_url));
+            }
+        }
+        
+        function generateQRCode(url) {
+            if (!window.QRCode) {
+                document.getElementById('qr-loading').innerHTML = 
+                    'QR code generation failed. Please try again later.';
+                return;
+            }
+            
+            try {
+                const qrContainer = document.getElementById('qrcode');
+                // Clear loading message
+                qrContainer.innerHTML = '';
+                
+                // Generate QR code
+                QRCode.toCanvas(qrContainer, url, {
+                    width: 200,
+                    margin: 1,
+                    color: {
+                        dark: '#4f46e5',
+                        light: '#ffffff'
+                    }
+                }, function(error) {
+                    if (error) {
+                        console.error(error);
+                        qrContainer.innerHTML = 'Failed to generate QR code.';
+                    } else {
+                        // Show download button after successful generation
+                        document.getElementById('downloadQrBtn').style.display = 'block';
+                    }
+                });
+            } catch (err) {
+                console.error("QR code generation error:", err);
+                document.getElementById('qr-loading').innerHTML = 
+                    'QR code generation failed. Please try again later.';
+            }
         }
         
         function showError(message) {
@@ -378,7 +441,7 @@
             `;
         }
         
-        function switchTab(tabId) {
+        function switchTab(tabId, tabElement) {
             // Hide all tabs
             document.getElementById('linkTab').style.display = 'none';
             document.getElementById('qrTab').style.display = 'none';
@@ -389,7 +452,7 @@
             // Update active tab styling
             const tabs = document.querySelectorAll('.tab');
             tabs.forEach(tab => tab.classList.remove('active'));
-            event.target.classList.add('active');
+            tabElement.classList.add('active');
         }
         
         function copyToClipboard(text) {
@@ -439,14 +502,24 @@
         }
         
         function downloadQR() {
-            const canvas = document.querySelector('#qrcode canvas');
-            const image = canvas.toDataURL("image/png");
-            const link = document.createElement('a');
-            link.href = image;
-            link.download = 'qrcode.png';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            try {
+                const canvas = document.querySelector('#qrcode canvas');
+                if (!canvas) {
+                    showToast('QR code not available for download');
+                    return;
+                }
+                
+                const image = canvas.toDataURL("image/png");
+                const link = document.createElement('a');
+                link.href = image;
+                link.download = 'qrcode.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (err) {
+                console.error("Download error:", err);
+                showToast('Failed to download QR code');
+            }
         }
         
         // Add enter key support
