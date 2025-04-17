@@ -1,19 +1,11 @@
 {
-    "version": 2,
-    "builds": [
-      {
-        "src": "main.py",
-        "use": "@vercel/python"
-      },
-      {
-        "src": "venv/lib/python3.*/site-packages",
-        "use": "@vercel/python"
-      }
-    ],
-    "routes": [
-      {
-        "src": "/(.*)",
-        "dest": "main.py"
-      }
-    ]
-  }
+  "version": 2,
+  "builds": [
+    { "src": "main.py", "use": "@vercel/python" },
+    { "src": "templates/*", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/static/(.*)", "dest": "/static/$1" },
+    { "src": "/(.*)", "dest": "main.py" }
+  ]
+}

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Self-Destructing URL Shortener</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+        input, button { padding: 10px; margin: 5px 0; width: 100%; }
+        #result { margin-top: 20px; padding: 10px; background: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <h1>🔗 Self-Destructing URLs</h1>
+    <input type="url" id="urlInput" placeholder="Enter URL to shorten">
+    <input type="number" id="expiryInput" placeholder="Hours until expiry (default: 24)" min="1">
+    <button onclick="shortenUrl()">Shorten URL</button>
+    <div id="result"></div>
+
+    <script>
+        async function shortenUrl() {
+            const url = document.getElementById('urlInput').value;
+            const hours = document.getElementById('expiryInput').value || 24;
+            
+            const response = await fetch('/shorten', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url, expires_in: hours })
+            });
+            
+            const data = await response.json();
+            document.getElementById('result').innerHTML = `
+                <p>Short URL: <a href="${data.short_url}" target="_blank">${data.short_url}</a></p>
+                <p>Expires at: ${data.expires_at}</p>
+            `;
+        }
+    </script>
+</body>
+</html>

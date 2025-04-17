@@ -1,22 +1,32 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse
 from datetime import datetime, timedelta
-import secrets
 
 app = FastAPI()
-links = {}  # Temporary "database" (replace with Redis later)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+
+# Simple "database"
+url_db = {}
+
+@app.get("/")
+async def root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 @app.post("/shorten")
-async def shorten_url(url: str, expires_in: int = 24):  # Expires in 24h by default
-    key = secrets.token_urlsafe(4) 
+async def shorten_url(url: str, expires_in: int = 24):
+    key = f"short_{len(url_db)}"
     expires_at = datetime.now() + timedelta(hours=expires_in)
-    links[key] = {"url": url, "expires_at": expires_at.isoformat()}
-    return {"short_url": f"/{key}", "expires_at": expires_at}
+    url_db[key] = {"url": url, "expires_at": expires_at.isoformat()}
+    return {
+        "short_url": f"https://your-domain.vercel.app/{key}",
+        "expires_at": expires_at.isoformat()
+    }
 
 @app.get("/{key}")
 async def redirect(key: str):
-    if key not in links:
-        raise HTTPException(status_code=404, detail="Link expired or invalid!")
-    if datetime.now() > datetime.fromisoformat(links[key]["expires_at"]):
-        del links[key]  # Auto-delete expired links
-        raise HTTPException(status_code=410, detail="Link self-destructed! 💥")
-    return {"original_url": links[key]["url"]}
+    if key not in url_db:
+        return {"error": "Not found"}
+    return RedirectResponse(url_db[key]["url"])
