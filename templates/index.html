@@ -176,12 +176,6 @@
             font-size: 0.9rem;
         }
         
-        .qr-container {
-            display: flex;
-            justify-content: center;
-            margin: 1.5rem 0;
-        }
-        
         .info {
             color: var(--text-secondary);
             font-size: 0.9rem;
@@ -202,28 +196,6 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
-        }
-        
-        .tabs {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .tab {
-            background: none;
-            border: none;
-            padding: 0.5rem 0;
-            font-size: 1rem;
-            font-weight: 500;
-            color: var(--text-secondary);
-            cursor: pointer;
-            width: auto;
-        }
-        
-        .tab.active {
-            color: var(--primary);
-            border-bottom: 2px solid var(--primary);
         }
         
         footer {
@@ -315,10 +287,6 @@
             const formattedExpiry = expiryDate.toLocaleString();
             const timeUntilExpiry = getTimeUntilExpiry(expiryDate);
             
-            // Encode URL for use in QR code
-            const encodedUrl = encodeURIComponent(data.short_url);
-            const qrCodeUrl = `https://chart.googleapis.com/chart?cht=qr&chl=${encodedUrl}&chs=200x200&chco=4f46e5`;
-            
             resultElement.innerHTML = `
                 <div class="card result-card">
                     <div class="success-message">
@@ -329,65 +297,21 @@
                         URL shortened successfully!
                     </div>
                     
-                    <div class="tabs">
-                        <button class="tab active" onclick="switchTab('linkTab', this)">Link</button>
-                        <button class="tab" onclick="switchTab('qrTab', this)">QR Code</button>
-                    </div>
-                    
-                    <div id="linkTab">
-                        <div class="url-display">
-                            <span class="url-value">${data.short_url}</span>
-                            <button class="copy-btn" onclick="copyToClipboard('${data.short_url}')">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                </svg>
-                            </button>
-                        </div>
-                        
-                        <p class="expiry">Expires: ${formattedExpiry} (${timeUntilExpiry})</p>
-                        
-                        <button onclick="window.open('${data.short_url}', '_blank')">
-                            Open Link
+                    <div class="url-display">
+                        <span class="url-value">${data.short_url}</span>
+                        <button class="copy-btn" onclick="copyToClipboard('${data.short_url}')">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
                         </button>
                     </div>
                     
-                    <div id="qrTab" style="display: none;">
-                        <div class="qr-container" id="qrcode">
-                            <img src="${qrCodeUrl}" alt="QR Code" 
-                                 onload="document.getElementById('qr-fallback').style.display = 'none';"
-                                 onerror="document.getElementById('qr-fallback').style.display = 'block';">
-                            <div id="qr-fallback" style="display: none; text-align: center; margin-top: 10px;">
-                                <p>QR code couldn't be loaded.</p>
-                                <p>Please use this URL instead:</p>
-                                <code style="background: #eee; padding: 5px; display: block; margin: 10px 0; word-break: break-all;">${data.short_url}</code>
-                                <button onclick="retryQRGeneration('${data.short_url}')">Retry Loading QR Code</button>
-                            </div>
-                        </div>
-                        <p class="info">Scan this QR code with your phone's camera to access the link</p>
-                        <button onclick="downloadQR('${qrCodeUrl}')">Download QR Code</button>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function retryQRGeneration(url) {
-            const encodedUrl = encodeURIComponent(url);
-            const qrCodeUrl = `https://chart.googleapis.com/chart?cht=qr&chl=${encodedUrl}&chs=200x200&chco=4f46e5`;
-            const qrContainer = document.getElementById('qrcode');
-            
-            qrContainer.innerHTML = `
-                <div style="text-align: center;">
-                    <p>Retrying QR code generation...</p>
-                    <img src="${qrCodeUrl}" alt="QR Code" 
-                         onload="document.getElementById('qr-fallback').style.display = 'none';"
-                         onerror="document.getElementById('qr-fallback').style.display = 'block';">
-                    <div id="qr-fallback" style="display: none; text-align: center; margin-top: 10px;">
-                        <p>QR code couldn't be loaded.</p>
-                        <p>Please use this URL instead:</p>
-                        <code style="background: #eee; padding: 5px; display: block; margin: 10px 0; word-break: break-all;">${url}</code>
-                        <p>Try again later or copy the URL manually.</p>
-                    </div>
+                    <p class="expiry">Expires: ${formattedExpiry} (${timeUntilExpiry})</p>
+                    
+                    <button onclick="window.open('${data.short_url}', '_blank')">
+                        Open Link
+                    </button>
                 </div>
             `;
         }
@@ -400,16 +324,6 @@
                     </div>
                 </div>
             `;
-        }
-        
-        function switchTab(tabId, tabElement) {
-            document.getElementById('linkTab').style.display = 'none';
-            document.getElementById('qrTab').style.display = 'none';
-            document.getElementById(tabId).style.display = 'block';
-            
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(tab => tab.classList.remove('active'));
-            tabElement.classList.add('active');
         }
         
         function copyToClipboard(text) {
@@ -458,15 +372,6 @@
             return `expires in ${hours} hour${hours !== 1 ? 's' : ''} ${minutes} minute${minutes !== 1 ? 's' : ''}`;
         }
         
-        function downloadQR(qrUrl) {
-            const link = document.createElement('a');
-            link.href = qrUrl;
-            link.download = 'qrcode.png';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-        
         // Add enter key support
         document.getElementById('urlInput').addEventListener('keyup', function(event) {
             if (event.key === 'Enter') {
@@ -479,4 +384,3 @@
     </script>
 </body>
 </html>
-``` 
