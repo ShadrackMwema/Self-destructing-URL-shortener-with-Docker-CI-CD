@@ -7,20 +7,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - name: Setup Node.js (Required for Vercel CLI)
+        uses: actions/setup-node@v3
         with:
-          python-version: '3.11'
+          node-version: '18'
       
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install fastapi uvicorn
-          
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+      
       - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v20
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}          # Standard name
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}        # Standard name
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }} # Standard name
-          vercel-args: '--prod'
+        run: |
+          vercel --token ${{ secrets.VERCEL_TOKEN }} \
+                 --scope ${{ secrets.VERCEL_ORG_ID }} \
+                 --confirm \
+                 --prod
